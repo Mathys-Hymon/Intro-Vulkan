@@ -628,7 +628,6 @@ void VulkanRenderer::createGraphicsPipeline()
 	// Graphics pipeline requires an array of shader create info
 	vk::PipelineShaderStageCreateInfo shaderStages[]{ vertexShaderCreateInfo, fragmentShaderCreateInfo };
 
-
 	// Create pipeline
 	
 	// -- VERTEX INPUT STAGE --

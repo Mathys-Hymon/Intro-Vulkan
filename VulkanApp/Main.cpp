@@ -16,7 +16,7 @@ void initWindow(string wName = "Vulkan", const int width = 800, const int height
 {
 	// Initialize GLFW
 	glfwInit();
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); 	// Glfw won't work with opengl
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	window = glfwCreateWindow(width, height, wName.c_str(), nullptr, nullptr);
