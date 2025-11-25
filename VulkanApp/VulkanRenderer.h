@@ -2,6 +2,9 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <stdexcept>
 #include <vector>
 using std::vector;
@@ -11,6 +14,13 @@ using std::set;
 using std::array;
 
 #include "VulkanUtilities.h"
+#include "VulkanMesh.h"
+
+struct ViewProjection
+{
+	glm::mat4 projection;
+	glm::mat4 view;
+};
 
 class VulkanRenderer
 {
@@ -29,6 +39,7 @@ public:
 	void draw();
 	void clean();
 
+	void updateModel(int modelId, glm::mat4 modelP);
 
 private:
 	GLFWwindow* window;
@@ -61,6 +72,23 @@ private:
 	const int MAX_FRAME_DRAWS = 2;			// Should be less than the number of swapchain images, here 3 (could cause bugs)
 	int currentFrame = 0;
 	vector<vk::Fence> drawFences;
+
+	vector<VulkanMesh> meshes;
+
+	vk::DescriptorSetLayout descriptorSetLayout;
+	vector<vk::Buffer> vpUniformBuffer;
+	vector<vk::DeviceMemory> vpUniformBufferMemory;
+	vk::DescriptorPool descriptorPool;
+	vector<vk::DescriptorSet> descriptorSets;
+	
+	
+	ViewProjection viewProjection;
+	vk::DeviceSize minUniformBufferOffet;
+	size_t modelUniformAlignement;
+	Model* modelTransferSpace;
+	const int MAX_OBJECTS = 2;
+	vector<vk::Buffer> modelUniformBufferDynamic;
+	vector<vk::DeviceMemory> modelUniformBufferMemoryDynamic;
 
 	// Instance
 	void createInstance();
@@ -101,7 +129,16 @@ private:
 	void createGraphicsCommandBuffers();
 	void recordCommands();
 
+	// Descriptor sets
+	void createDescriptorSetLayout();
+	void createUniformBuffers();
+	void createDescriptorPool();
+	void createDescriptorSets();
+	void updateUniformBuffers(uint32_t imageIndex);
+
+	// Data alignment and dynamic buffers
+	void allocateDynamicBufferTransferSpace();
+
 	// Draw
 	void createSynchronisation();
 };
-
