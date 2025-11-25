@@ -90,6 +90,12 @@ private:
 	vector<vk::Buffer> modelUniformBufferDynamic;
 	vector<vk::DeviceMemory> modelUniformBufferMemoryDynamic;
 
+	vk::PushConstantRange pushConstantRange;
+
+	vk::Image depthBufferImage;
+	vk::DeviceMemory depthBufferImageMemory;
+	vk::ImageView depthBufferImageView;
+
 	// Instance
 	void createInstance();
 	bool checkInstanceExtensionSupport(const vector<const char*>& checkExtensions);
@@ -127,7 +133,7 @@ private:
 	void createFramebuffers();
 	void createGraphicsCommandPool();
 	void createGraphicsCommandBuffers();
-	void recordCommands();
+	void recordCommands(uint32_t currentImage);
 
 	// Descriptor sets
 	void createDescriptorSetLayout();
@@ -139,6 +145,17 @@ private:
 	// Data alignment and dynamic buffers
 	void allocateDynamicBufferTransferSpace();
 
+	// Push constants
+	void createPushConstantRange();
+
 	// Draw
 	void createSynchronisation();
+	
+	// Depth
+	void createDepthBufferImage();
+
+	vk::Format chooseSupportedFormat(const vector<vk::Format>& formats, vk::ImageTiling tiling,vk::FormatFeatureFlags featureFlags);
+
+	VkImage createImage(uint32_t width, uint32_t height,vk::Format format, vk::ImageTiling tiling,vk::ImageUsageFlags useFlags, vk::MemoryPropertyFlags propFlags,
+		vk::DeviceMemory *imageMemory);
 };
