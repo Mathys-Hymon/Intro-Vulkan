@@ -2,8 +2,14 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "stb_image.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include <stdexcept>
 #include <vector>
@@ -15,6 +21,7 @@ using std::array;
 
 #include "VulkanUtilities.h"
 #include "VulkanMesh.h"
+#include "VulkanMeshModel.h"
 
 struct ViewProjection
 {
@@ -40,14 +47,17 @@ public:
 	void clean();
 
 	void updateModel(int modelId, glm::mat4 modelP);
+	int createMeshModel(string filename);
+	stbi_uc* loadTextureFile(const string& filename, int* width, int* height, vk::DeviceSize* imageSize);
 
 private:
 	GLFWwindow* window;
 	vk::Instance instance;
-	vk::Queue graphicsQueue;			// Handles to queue (no value stored)
+	vk::Queue graphicsQueue; // Handles to queue (no value stored)
 	VkDebugUtilsMessengerEXT debugMessenger;
-	
-	struct {
+
+	struct
+	{
 		vk::PhysicalDevice physicalDevice;
 		vk::Device logicalDevice;
 	} mainDevice;
@@ -69,10 +79,11 @@ private:
 
 	vector<vk::Semaphore> imageAvailable;
 	vector<vk::Semaphore> renderFinished;
-	const int MAX_FRAME_DRAWS = 2;			// Should be less than the number of swapchain images, here 3 (could cause bugs)
+	const int MAX_FRAME_DRAWS = 2; // Should be less than the number of swapchain images, here 3 (could cause bugs)
 	int currentFrame = 0;
 	vector<vk::Fence> drawFences;
 
+	const int MAX_OBJECTS = 20000;
 	vector<VulkanMesh> meshes;
 
 	vk::DescriptorSetLayout descriptorSetLayout;
@@ -80,13 +91,11 @@ private:
 	vector<vk::DeviceMemory> vpUniformBufferMemory;
 	vk::DescriptorPool descriptorPool;
 	vector<vk::DescriptorSet> descriptorSets;
-	
-	
+
 	ViewProjection viewProjection;
 	vk::DeviceSize minUniformBufferOffet;
 	size_t modelUniformAlignement;
 	Model* modelTransferSpace;
-	const int MAX_OBJECTS = 2;
 	vector<vk::Buffer> modelUniformBufferDynamic;
 	vector<vk::DeviceMemory> modelUniformBufferMemoryDynamic;
 
@@ -95,6 +104,16 @@ private:
 	vk::Image depthBufferImage;
 	vk::DeviceMemory depthBufferImageMemory;
 	vk::ImageView depthBufferImageView;
+
+	vector<vk::Image> textureImages;
+	vector<vk::ImageView> textureImageViews;
+	vector<vk::DeviceMemory> textureImageMemory;
+	vk::Sampler textureSampler;
+	vk::DescriptorPool samplerDescriptorPool;
+	vk::DescriptorSetLayout samplerDescriptorSetLayout;
+	vector<vk::DescriptorSet> samplerDescriptorSets;
+
+	vector<VulkanMeshModel> meshModels;
 
 	// Instance
 	void createInstance();
@@ -148,14 +167,18 @@ private:
 	// Push constants
 	void createPushConstantRange();
 
-	// Draw
-	void createSynchronisation();
-	
 	// Depth
 	void createDepthBufferImage();
+	vk::Image createImage(uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling,
+		vk::ImageUsageFlags useFlags, vk::MemoryPropertyFlags propFlags, vk::DeviceMemory* imageMemory);
+	vk::Format chooseSupportedFormat(const vector<vk::Format>& formats, vk::ImageTiling tiling, vk::FormatFeatureFlags featureFlags);
 
-	vk::Format chooseSupportedFormat(const vector<vk::Format>& formats, vk::ImageTiling tiling,vk::FormatFeatureFlags featureFlags);
+	// Draw
+	void createSynchronisation();
 
-	VkImage createImage(uint32_t width, uint32_t height,vk::Format format, vk::ImageTiling tiling,vk::ImageUsageFlags useFlags, vk::MemoryPropertyFlags propFlags,
-		vk::DeviceMemory *imageMemory);
+	// Textures
+	int createTexture(const string& filename);
+	int createTextureImage(const string& filename);
+	void createTextureSampler();
+	int createTextureDescriptor(vk::ImageView textureImageView);
 };
